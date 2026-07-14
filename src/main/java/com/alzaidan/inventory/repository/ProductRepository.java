@@ -18,12 +18,32 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     boolean existsBySkuAndIdNot(String sku, Long id);
 
-    @Query("SELECT p FROM Product p WHERE " +
-           "(:search IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
-           "OR LOWER(p.sku) LIKE LOWER(CONCAT('%', :search, '%'))) " +
-           "AND (:category IS NULL OR p.category = :category)")
-    List<Product> search(@Param("search") String search,
-                         @Param("category") Product.Category category);
+
+        @Query("""
+            SELECT p
+            FROM Product p
+            WHERE
+            (
+            COALESCE(:search, '') = ''
+            OR LOWER(p.name) LIKE CONCAT('%', LOWER(:search), '%')
+            OR LOWER(p.sku) LIKE CONCAT('%', LOWER(:search), '%')
+            )
+            AND
+            (
+            :category IS NULL
+            OR p.category = :category
+            )
+            """)
+            List<Product> search(
+                    @Param("search") String search,
+                    @Param("category") Product.Category category);
+
+//    @Query("SELECT p FROM Product p WHERE " +
+//           "(:search IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
+//           "OR LOWER(p.sku) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+//           "AND (:category IS NULL OR p.category = :category)")
+//    List<Product> search(@Param("search") String search,
+//                         @Param("category") Product.Category category);
 
     @Query("SELECT p FROM Product p WHERE p.stock <= p.minStock AND p.stock > 0")
     List<Product> findLowStockProducts();
